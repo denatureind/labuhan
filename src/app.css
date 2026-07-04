@@ -1,0 +1,238 @@
+/* ─── Pelabuhan Hijau: Muara Harapan — sistem desain ───
+   Chrome "pernis kapal malam": panel navy pekat + aksen lampu dermaga,
+   membingkai peta siang yang cerah. Warna disadap dari aset lukisannya. */
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/bricolage-grotesque';
+
+:root {
+  /* Palet inti */
+  --laut-malam: #081729; /* langit malam opening.png */
+  --laut-dalam: #0f2947; /* panel utama */
+  --laut-panel: #16345a; /* panel terang / hover */
+  --garis-buih: #2c4d78; /* border halus */
+  --busa: #eaf4ff; /* teks utama di gelap */
+  --busa-redup: #9db4d3; /* teks sekunder */
+  --lampu: #f5b841; /* amber lampu dermaga — aksen tanda tangan */
+  --lampu-terang: #ffd97a;
+  --karang: #e4604e; /* bahaya */
+  --bakau: #58c08a; /* positif */
+
+  /* Warna per indikator */
+  --c-dana: #f2c14e;
+  --c-reputasi: #b48cf2;
+  --c-lingkungan: #4ecbe0;
+  --c-sdm: #f2914e;
+  --c-infrastruktur: #7ea6e8;
+  --c-komunitas: #67d18f;
+
+  --font-display: 'Bricolage Grotesque Variable', 'Plus Jakarta Sans Variable', sans-serif;
+  --font-body: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+
+  --radius: 14px;
+  --radius-s: 9px;
+  --shadow-panel: 0 10px 40px rgba(2, 8, 20, 0.55);
+  --shadow-pop: 0 18px 60px rgba(2, 8, 20, 0.65);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--laut-malam);
+  color: var(--busa);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--lampu);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ─── Bahan bersama ─── */
+.panel {
+  background: linear-gradient(180deg, var(--laut-panel), var(--laut-dalam));
+  border: 1px solid var(--garis-buih);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  background: var(--laut-panel);
+  border: 1px solid var(--garis-buih);
+  color: var(--busa);
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--lampu);
+  box-shadow: 0 6px 22px rgba(245, 184, 65, 0.16);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-lampu {
+  background: linear-gradient(180deg, var(--lampu-terang), var(--lampu));
+  border-color: var(--lampu);
+  color: #3a2603;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.btn-lampu:hover:not(:disabled) {
+  box-shadow: 0 8px 28px rgba(245, 184, 65, 0.4);
+}
+
+/* Chip efek indikator (mis. 💰 +8) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(8, 23, 41, 0.55);
+  border: 1px solid var(--garis-buih);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chip.naik {
+  color: var(--bakau);
+  border-color: color-mix(in srgb, var(--bakau) 45%, transparent);
+}
+
+.chip.turun {
+  color: var(--karang);
+  border-color: color-mix(in srgb, var(--karang) 45%, transparent);
+}
+
+.eyebrow {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lampu);
+}
+
+/* ─── Gerak ─── */
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.6deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0.7deg);
+  }
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Scrollbar ala kapal */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--garis-buih);
+  border-radius: 99px;
+  border: 2px solid var(--laut-dalam);
+}
