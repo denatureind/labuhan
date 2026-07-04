@@ -14,7 +14,7 @@ import {
   currentEvent,
   dayDeltas,
 } from './core';
-import { sfx } from '../audio/sfx';
+import { sfx, startAmbient } from '../audio/sfx';
 
 const SAVE_KEY = 'pelabuhan-hijau-save-v1';
 
@@ -56,6 +56,7 @@ class Game {
   start(characterId: GameState['characterId']): void {
     this.state = newGame(characterId);
     this.screen = 'game';
+    startAmbient();
     sfx.bell();
     this.save();
   }
@@ -68,6 +69,7 @@ class Game {
       if (!parsed?.stats || parsed.over) return false;
       this.state = parsed;
       this.screen = 'game';
+      startAmbient();
       sfx.bell();
       return true;
     } catch {

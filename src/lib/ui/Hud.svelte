@@ -123,7 +123,7 @@
 
   .tick {
     flex: 1;
-    height: 5px;
+    height: 6px;
     border-radius: 2px;
     background: rgba(157, 180, 211, 0.22);
     transition: background 0.3s;
@@ -132,8 +132,8 @@
   .tick.storm {
     background: repeating-linear-gradient(
       -45deg,
-      rgba(228, 96, 78, 0.5),
-      rgba(228, 96, 78, 0.5) 3px,
+      rgba(228, 96, 78, 0.7),
+      rgba(228, 96, 78, 0.7) 3px,
       rgba(228, 96, 78, 0.18) 3px,
       rgba(228, 96, 78, 0.18) 6px
     );

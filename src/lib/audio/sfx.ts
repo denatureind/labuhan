@@ -72,6 +72,39 @@ function noise(dur: number, opts: { vol?: number; delay?: number; freq?: number 
   src.start(t0);
 }
 
+let ambientOn = false;
+
+/** Desir ombak latar — sangat pelan, mengikuti master (ikut tersenyapkan). */
+export function startAmbient(): void {
+  const c = ensure();
+  if (!c || !master || ambientOn) return;
+  ambientOn = true;
+  const len = c.sampleRate * 8;
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const data = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < len; i++) {
+    last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+    data[i] = last * 3.5;
+  }
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  const lp = c.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 380;
+  const g = c.createGain();
+  g.gain.value = 0.045;
+  const lfo = c.createOscillator();
+  lfo.frequency.value = 0.09;
+  const lfoG = c.createGain();
+  lfoG.gain.value = 0.028;
+  lfo.connect(lfoG).connect(g.gain);
+  src.connect(lp).connect(g).connect(master);
+  src.start();
+  lfo.start();
+}
+
 export const sfx = {
   click(): void {
     tone(660, 0.06, { type: 'triangle', vol: 0.1 });

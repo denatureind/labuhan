@@ -41,9 +41,16 @@
     mx = (e.clientX / window.innerWidth - 0.5) * 2;
     my = (e.clientY / window.innerHeight - 0.5) * 2;
   }
+
+  function onKey(e: KeyboardEvent) {
+    if (e.key === 'Escape' && game.openFacility) {
+      game.openFacility = null;
+      sfx.close();
+    }
+  }
 </script>
 
-<svelte:window onmousemove={onMove} />
+<svelte:window onmousemove={onMove} onkeydown={onKey} />
 
 <div class="game" class:storm={stormActive}>
   <!-- ── Panggung peta ── -->

@@ -20,6 +20,7 @@ npm run dev      # buka http://localhost:5173
 | `npm run check` | pemeriksaan tipe (svelte-check) |
 | `npm run simulate` | simulasi keseimbangan headless: 4 strategi bot × 3 karakter × 12 run |
 | `node scripts/playtest.mjs` | playtest UI end-to-end via Playwright (butuh `npm run dev` di port 5199) |
+| `node scripts/fullrun.mjs` | bot memainkan 30 hari penuh secara alami di browser (port 5199) |
 
 ## Arsitektur
 

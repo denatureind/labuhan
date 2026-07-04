@@ -83,7 +83,7 @@ export const CHARACTERS: CharacterDef[] = [
       effects: { dana: 14, sdm: -4 },
       cooldown: 5,
     },
-    portrait: { x: 66.5, y: 22, w: 17, h: 13.5 },
+    portrait: { x: 69.5, y: 22, w: 17, h: 13.5 },
   },
 ];
 
