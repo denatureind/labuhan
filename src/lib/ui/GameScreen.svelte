@@ -58,6 +58,15 @@
     <div class="stage" style="transform: translate(calc(-50% + {mx * -0.6}%), calc(-50% + {my * -0.6}%))">
       <img class="map" src="./assets/images/bg.png" alt="Peta Pelabuhan Muara Harapan" />
       <div class="sea-shimmer" aria-hidden="true"></div>
+      <div class="sea-drift" aria-hidden="true"></div>
+
+      <!-- Lalu lintas darat: di bawah bangunan agar teroklusi wajar -->
+      <div class="traffic" aria-hidden="true">
+        <img class="veh sedan" src="./assets/images/sedan.png" alt="" />
+        <img class="veh mvp" src="./assets/images/mvp.png" alt="" />
+        <img class="veh boxtruck" src="./assets/images/box.png" alt="" />
+        <img class="veh truk" src="./assets/images/truk.png" alt="" />
+      </div>
 
       {#each FACILITIES as f (f.id)}
         <button
@@ -73,9 +82,17 @@
         </button>
       {/each}
 
-      <!-- dekorasi hidup -->
-      <img class="deco truck" src="./assets/images/truk.png" alt="" aria-hidden="true" />
-      <img class="deco ship" src="./assets/images/kargo.png" alt="" aria-hidden="true" />
+      <!-- Kapal kargo: singgah ke dermaga lalu berlayar pergi -->
+      <div class="ship-track" aria-hidden="true">
+        <img class="ship-img" src="./assets/images/kargo.png" alt="" />
+      </div>
+
+      <!-- Camar menyeberangi peta -->
+      <div class="birds" aria-hidden="true">
+        <span class="bird-track b0"><svg viewBox="0 0 26 10"><path d="M1 8 Q 7 1 13 8 Q 19 1 25 8" /></svg></span>
+        <span class="bird-track b1"><svg viewBox="0 0 26 10"><path d="M1 8 Q 7 1 13 8 Q 19 1 25 8" /></svg></span>
+        <span class="bird-track b2"><svg viewBox="0 0 26 10"><path d="M1 8 Q 7 1 13 8 Q 19 1 25 8" /></svg></span>
+      </div>
     </div>
   </div>
 
@@ -179,6 +196,32 @@
     mix-blend-mode: overlay;
   }
 
+  /* Lapisan kilau kedua: fase & tempo beda + hanyut pelan, biar air terasa berarus */
+  .sea-drift {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 20% 8% at 86% 24%, rgba(255, 255, 255, 0.13), transparent),
+      radial-gradient(ellipse 24% 9% at 93% 55%, rgba(255, 255, 255, 0.11), transparent),
+      radial-gradient(ellipse 18% 7% at 74% 94%, rgba(255, 255, 255, 0.12), transparent),
+      radial-gradient(ellipse 13% 6% at 22% 96%, rgba(255, 255, 255, 0.1), transparent),
+      radial-gradient(ellipse 12% 5% at 63% 74%, rgba(255, 255, 255, 0.09), transparent);
+    animation:
+      shimmer 8.5s ease-in-out -3s infinite,
+      sea-drift 26s ease-in-out infinite alternate;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  @keyframes sea-drift {
+    from {
+      transform: translate(0, 0);
+    }
+    to {
+      transform: translate(0.7%, 0.4%);
+    }
+  }
+
   /* ── Fasilitas ── */
   .facility {
     position: absolute;
@@ -244,75 +287,309 @@
     translate: 0 0;
   }
 
-  /* Truk pengangkut hilir-mudik di jalan pelabuhan */
-  .deco.truck {
+  /* ── Lalu lintas darat ─────────────────────────────────────────
+     Sprite kendaraan menghadap barat-daya (kiri-bawah). Jalan isometrik
+     punya dua keluarga arah; perjalanan ke tenggara memakai scaleX(-1).
+     Tiap kendaraan: fade-in di satu tepi, melintas, fade-out di tepi lain,
+     lalu menunggu (bagian sisa siklus) sebelum muncul lagi. */
+  .traffic {
     position: absolute;
-    width: 4.6%;
-    left: 30%;
-    top: 41%;
-    animation: drive 26s linear infinite;
+    inset: 0;
     pointer-events: none;
   }
 
-  @keyframes drive {
-    0%,
-    100% {
-      offset: none;
+  .veh {
+    position: absolute;
+    opacity: 0;
+    filter: drop-shadow(0 5px 8px rgba(2, 8, 20, 0.3));
+  }
+
+  /* Jalur A (timur-laut → barat-daya, lewat simpang tengah) */
+  .veh.sedan {
+    width: 3.4%;
+    left: 60%;
+    top: 20.8%;
+    animation: drive-sw 46s linear -9s infinite;
+  }
+
+  @keyframes drive-sw {
+    0% {
       transform: translate(0, 0);
+      opacity: 0;
+    }
+    3% {
+      opacity: 1;
+    }
+    52% {
+      transform: translate(-34vw, 17vw);
+      opacity: 1;
+    }
+    56% {
+      transform: translate(-37vw, 18.5vw);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(-37vw, 18.5vw);
+      opacity: 0;
+    }
+  }
+
+  /* Jalur B (barat-laut → tenggara, jalan yang sama dipakai dua kendaraan
+     dengan fase & tempo berbeda) */
+  .veh.mvp {
+    width: 3.7%;
+    left: 28%;
+    top: 26.5%;
+    animation: drive-se 52s linear -31s infinite;
+  }
+
+  .veh.boxtruck {
+    width: 4.1%;
+    left: 28%;
+    top: 27.3%; /* lajur sebelah, agar tak menumpuk persis dengan mvp */
+    animation: drive-se 61s linear -4s infinite;
+  }
+
+  @keyframes drive-se {
+    0% {
+      transform: translate(0, 0) scaleX(-1);
       opacity: 0;
     }
     4% {
       opacity: 1;
     }
-    46% {
-      transform: translate(21vw, 10.2vw);
+    55% {
+      transform: translate(33vw, 16.5vw) scaleX(-1);
       opacity: 1;
     }
-    50% {
+    59% {
+      transform: translate(36vw, 18vw) scaleX(-1);
       opacity: 0;
     }
-    54% {
-      transform: translate(21vw, 10.2vw) scaleX(-1);
-      opacity: 1;
-    }
-    96% {
-      transform: translate(0, 0) scaleX(-1);
-      opacity: 1;
+    100% {
+      transform: translate(36vw, 18vw) scaleX(-1);
+      opacity: 0;
     }
   }
 
-  /* Kapal kargo berlayar pelan di laut lepas */
-  .deco.ship {
-    position: absolute;
-    width: 9%;
-    left: 88%;
-    top: 78%;
-    animation: sail 60s linear infinite;
-    pointer-events: none;
-    filter: drop-shadow(0 8px 14px rgba(2, 8, 20, 0.3));
+  /* Jalur C (jalan angkut tepi tapak, menuju pesisir) */
+  .veh.truk {
+    width: 4.6%;
+    left: 21.5%;
+    top: 49%;
+    animation: drive-haul 40s linear -20s infinite;
   }
 
-  @keyframes sail {
+  @keyframes drive-haul {
     0% {
-      transform: translate(6vw, 14vh);
+      transform: translate(0, 0) scaleX(-1);
       opacity: 0;
     }
-    6% {
+    5% {
       opacity: 1;
     }
     48% {
-      transform: translate(-4vw, -28vh);
+      transform: translate(23vw, 11.5vw) scaleX(-1);
       opacity: 1;
     }
-    50% {
-      transform: translate(-4vw, -28vh) scaleX(-1);
-      opacity: 1;
-    }
-    94% {
-      opacity: 1;
+    53% {
+      transform: translate(26vw, 13vw) scaleX(-1);
+      opacity: 0;
     }
     100% {
-      transform: translate(6vw, 14vh) scaleX(-1);
+      transform: translate(26vw, 13vw) scaleX(-1);
+      opacity: 0;
+    }
+  }
+
+  /* ── Kapal kargo: datang dari laut lepas, sandar di dermaga, pergi lagi ── */
+  .ship-track {
+    position: absolute;
+    width: 9%;
+    left: 93%;
+    top: 71%;
+    animation: sail-visit 84s linear infinite;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .ship-img {
+    width: 100%;
+    animation: bob 6s ease-in-out infinite;
+    filter: drop-shadow(0 8px 14px rgba(2, 8, 20, 0.3));
+  }
+
+  @keyframes sail-visit {
+    0% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+    5% {
+      opacity: 1;
+    }
+    /* berlayar mendekat ke sisi air dermaga */
+    28% {
+      transform: translate(-24.5vw, -3.6vw);
+      opacity: 1;
+    }
+    /* sandar — bongkar muat (bob jalan terus lewat .ship-img) */
+    54% {
+      transform: translate(-24.5vw, -3.6vw);
+      opacity: 1;
+    }
+    /* putar haluan */
+    56% {
+      transform: translate(-24.5vw, -3.6vw) scaleX(-1);
+      opacity: 1;
+    }
+    /* berlayar pergi */
+    93% {
+      transform: translate(0, 0) scaleX(-1);
+      opacity: 1;
+    }
+    97% {
+      transform: translate(1.5vw, 0.5vw) scaleX(-1);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(1.5vw, 0.5vw) scaleX(-1);
+      opacity: 0;
+    }
+  }
+
+  /* ── Camar ──────────────────────────────────────────────────── */
+  .birds {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 8;
+  }
+
+  .bird-track {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .bird-track svg {
+    width: 100%;
+    fill: none;
+    stroke: rgba(18, 32, 54, 0.55);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    transform-origin: 50% 62%;
+    animation: flap 0.85s ease-in-out infinite;
+  }
+
+  .bird-track.b0 {
+    width: 1.7%;
+    left: -3%;
+    top: 33%;
+    animation: fly-e 34s linear infinite;
+  }
+
+  .bird-track.b1 {
+    width: 1.15%;
+    left: 6%;
+    top: 5%;
+    animation: fly-e2 47s linear -19s infinite;
+  }
+
+  .bird-track.b1 svg {
+    animation-duration: 0.7s;
+    stroke-width: 2.8;
+  }
+
+  .bird-track.b2 {
+    width: 1.4%;
+    left: 102%;
+    top: 10%;
+    animation: fly-w 41s linear -28s infinite;
+  }
+
+  .bird-track.b2 svg {
+    transform: scaleX(-1);
+    animation: flap-rev 1s ease-in-out infinite;
+  }
+
+  @keyframes flap {
+    0%,
+    100% {
+      transform: scaleY(1);
+    }
+    50% {
+      transform: scaleY(0.5);
+    }
+  }
+
+  @keyframes flap-rev {
+    0%,
+    100% {
+      transform: scaleX(-1) scaleY(1);
+    }
+    50% {
+      transform: scaleX(-1) scaleY(0.5);
+    }
+  }
+
+  @keyframes fly-e {
+    0% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+    5% {
+      opacity: 0.9;
+    }
+    72% {
+      opacity: 0.9;
+    }
+    78% {
+      transform: translate(76vw, -8vw);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(76vw, -8vw);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fly-e2 {
+    0% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+    6% {
+      opacity: 0.85;
+    }
+    64% {
+      opacity: 0.85;
+    }
+    70% {
+      transform: translate(68vw, 9vw);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(68vw, 9vw);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fly-w {
+    0% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+    5% {
+      opacity: 0.85;
+    }
+    68% {
+      opacity: 0.85;
+    }
+    74% {
+      transform: translate(-80vw, 12vw);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(-80vw, 12vw);
       opacity: 0;
     }
   }
