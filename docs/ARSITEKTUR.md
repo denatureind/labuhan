@@ -89,6 +89,11 @@ src/
     │   ├── traffic.ts            buildTrafficFrames(): ubah titik-titik data/traffic.ts
     │   │                        jadi keyframes Web Animations API (posisi %, bukan
     │   │                        vw/vh — lihat §4h soal kenapa itu penting).
+    │   ├── motion.svelte.ts      Preferensi animasi latar (tombol 💫/💤 di HUD).
+    │   │                        Default ikut prefers-reduced-motion, bisa di-override
+    │   │                        pemain; App.svelte memetakannya ke body.no-ambient
+    │   │                        (app.css membekukan HANYA gerak dekoratif — umpan
+    │   │                        balik singkat seperti delta HUD tetap hidup).
     │   └── editorStore.svelte.ts State "🛠️ Edit Tata Letak" (dev-only): salinan kerja
     │                            facilities/traffic yang bisa diseret bebas, plus
     │                            saveFacilities()/saveTraffic() yang POST ke endpoint

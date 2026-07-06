@@ -1,5 +1,7 @@
 <script lang="ts">
   /** Lapisan cuaca: hujan badai (canvas ringan) & kilau cerah musim baik. */
+  import { motion } from '../engine/motion.svelte';
+
   let { storm = false, sunny = false }: { storm?: boolean; sunny?: boolean } = $props();
 
   let canvas = $state<HTMLCanvasElement | null>(null);
@@ -19,8 +21,8 @@
     resize();
     window.addEventListener('resize', resize);
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const N = reduced ? 0 : 130;
+    // Mengikuti toggle animasi latar (reaktif: badai langsung reda/turun saat diubah).
+    const N = motion.ambient ? 130 : 0;
     const drops = Array.from({ length: N }, () => ({
       x: Math.random() * cv.width,
       y: Math.random() * cv.height,

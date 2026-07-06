@@ -214,14 +214,25 @@ img {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+/* ─── Mode hemat gerak ───
+   body.no-ambient dipasang dari App.svelte (default mengikuti
+   prefers-reduced-motion sistem, bisa di-override pemain lewat tombol 💫 di
+   HUD — lihat engine/motion.svelte.ts). Sengaja BUKAN aturan pukul-rata
+   `* { animation-duration: 0.01ms }` seperti dulu: aturan lama itu ikut
+   membekukan animasi umpan-balik sehingga delta indikator di HUD (yang
+   berakhir di opacity 0) tak pernah terlihat di mesin reduced-motion.
+   Di sini hanya gerak DEKORATIF yang berputar terus-menerus yang dibekukan;
+   umpan-balik singkat sekali-jalan (fade modal, delta, pop) tetap hidup. */
+body.no-ambient .beam,
+body.no-ambient .sea-shimmer,
+body.no-ambient .sea-drift,
+body.no-ambient .bird-track,
+body.no-ambient .bird-track svg,
+body.no-ambient .facility.bob,
+body.no-ambient .veh-img.bob,
+body.no-ambient .storm-tint,
+body.no-ambient .gauge.danger {
+  animation: none !important;
 }
 
 /* Scrollbar ala kapal */

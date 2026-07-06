@@ -1,10 +1,17 @@
 <script lang="ts">
   import { game } from './lib/engine/store.svelte';
+  import { motion } from './lib/engine/motion.svelte';
   import { RELOAD_FLAG_KEY } from './lib/engine/editorStore.svelte';
   import Title from './lib/ui/Title.svelte';
   import CharacterSelect from './lib/ui/CharacterSelect.svelte';
   import GameScreen from './lib/ui/GameScreen.svelte';
   import OverScreen from './lib/ui/OverScreen.svelte';
+
+  // Kelas .no-ambient di <body> membekukan gerak dekoratif (lihat app.css) —
+  // dipasang di sini supaya berlaku di semua layar, termasuk layar judul.
+  $effect(() => {
+    document.body.classList.toggle('no-ambient', !motion.ambient);
+  });
 
   // Setelah "🛠️ Edit Tata Letak" menyimpan & memuat ulang halaman (lihat
   // editorStore.svelte.ts), lanjutkan langsung ke permainan yang tadi

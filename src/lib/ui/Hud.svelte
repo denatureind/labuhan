@@ -1,5 +1,6 @@
 <script lang="ts">
   import { game } from '../engine/store.svelte';
+  import { motion } from '../engine/motion.svelte';
   import { STATS } from '../data/stats';
   import { SCENARIOS, SCENARIO_SCHEDULE } from '../data/scenarios';
   import { getCharacter } from '../data/characters';
@@ -114,6 +115,19 @@
           {sc.icon}<b>{act.daysLeft}</b>
         </span>
       {/each}
+      <button
+        class="icon-btn"
+        onclick={() => {
+          motion.toggle();
+          sfx.click();
+        }}
+        aria-label={motion.ambient ? 'Matikan animasi latar' : 'Nyalakan animasi latar'}
+        title={motion.ambient
+          ? 'Animasi latar menyala — klik untuk hemat gerak'
+          : 'Animasi latar mati (hemat gerak) — klik untuk menyalakan'}
+      >
+        {motion.ambient ? '💫' : '💤'}
+      </button>
       <button class="icon-btn" onclick={onMute} aria-label={muted ? 'Nyalakan suara' : 'Senyapkan'}>
         {muted ? '🔇' : '🔊'}
       </button>

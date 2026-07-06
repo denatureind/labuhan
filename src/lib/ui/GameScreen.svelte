@@ -1,5 +1,6 @@
 <script lang="ts">
   import { game } from '../engine/store.svelte';
+  import { motion } from '../engine/motion.svelte';
   import { TRAFFIC } from '../data/traffic';
   import { buildTrafficFrames } from '../engine/traffic';
   import { layoutEditor } from '../engine/editorStore.svelte';
@@ -16,7 +17,9 @@
   import LayoutEditor from './LayoutEditor.svelte';
   import { sfx } from '../audio/sfx';
 
-  /** Semua Animation yang lagi berjalan, supaya bisa dijeda saat mode edit aktif. */
+  /** Semua Animation yang lagi berjalan — dijeda saat mode edit aktif ATAU
+   * animasi latar dimatikan (WAAPI tidak tersentuh aturan CSS .no-ambient,
+   * jadi harus dijeda dari JS). */
   const runningAnims: Animation[] = [];
 
   /** Animasikan satu kendaraan/kapal lewat Web Animations API dari data TRAFFIC. */
@@ -27,6 +30,8 @@
       iterations: Infinity,
       easing: 'linear',
     });
+    // Elemen bisa mount SETELAH $effect pembeku jalan — samakan kondisinya di sini.
+    if (layoutEditor.active || !motion.ambient) anim.pause();
     runningAnims.push(anim);
     return {
       destroy() {
@@ -38,7 +43,8 @@
   }
 
   $effect(() => {
-    for (const a of runningAnims) (layoutEditor.active ? a.pause() : a.play());
+    const freeze = layoutEditor.active || !motion.ambient;
+    for (const a of runningAnims) (freeze ? a.pause() : a.play());
   });
 
   function toggleEditor() {
@@ -108,7 +114,7 @@
   let mx = $state(0);
   let my = $state(0);
   function onMove(e: MouseEvent) {
-    if (layoutEditor.active) return;
+    if (layoutEditor.active || !motion.ambient) return;
     mx = (e.clientX / window.innerWidth - 0.5) * 2;
     my = (e.clientY / window.innerHeight - 0.5) * 2;
   }
