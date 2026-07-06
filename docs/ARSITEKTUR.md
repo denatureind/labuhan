@@ -157,8 +157,8 @@ membaca `phase` ini dan me-render komponen yang sesuai secara kondisional
 └─────────────────────────────────────────────────────────────────────┘
         ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  phase = 'manage'  (bebas urutan, sampai slots habis atau pemain klik │
-│                      "Akhiri Hari")                                   │
+│  phase = 'manage'  (bebas urutan; berlanjut sampai pemain klik        │
+│    "Akhiri Hari" — slots habis hanya memblokir aksi baru, fase tetap) │
 │  Peta (GameScreen.svelte) → klik fasilitas → buka FacilityPanel       │
 │  Pemain klik "Kerjakan" pada satu aksi → game.act(actionId)           │
 │    └─ doAction(state, actionId)               [engine/core.ts]       │
@@ -187,8 +187,12 @@ memutasinya langsung — mirip fungsi util yang menerima `reactive()` object di
 Vue dan mengubah propertinya. `store.svelte.ts` adalah satu-satunya jembatan:
 ia memegang `state = $state<GameState|null>(null)`, memanggil fungsi-fungsi
 `core.ts` itu, lalu menambahkan efek samping UI (bunyi, animasi delta,
-autosave). Komponen `.svelte` tidak pernah memanggil `core.ts` langsung —
-selalu lewat method di `game` (singleton `store.svelte.ts`).
+autosave). Untuk setiap **mutasi** state, komponen `.svelte` selalu lewat
+method di `game` (singleton `store.svelte.ts`) — tidak pernah memanggil fungsi
+pengubah `core.ts` langsung. Pengecualiannya dua predikat baca-saja,
+`canAfford()` dan `wouldBeFatal()`, yang di-impor langsung dari `core.ts` oleh
+`EventCard.svelte` dan `FacilityPanel.svelte` semata untuk menghitung status
+tombol (aktif/terkunci).
 
 ---
 
@@ -230,7 +234,8 @@ default value. Svelte 5 cukup:
 ```ts
 let { storm = false, sunny = false }: { storm?: boolean; sunny?: boolean } = $props();
 ```
-(lihat `WeatherFX.svelte`, `FacilityPanel.svelte`).
+(nilai default seperti ini hanya dipakai di `WeatherFX.svelte`; komponen lain
+seperti `FacilityPanel.svelte` juga destructuring `$props()`, tapi tanpa default).
 
 **e) Tidak ada file `.vue` tunggal dengan 3 blok — tapi strukturnya mirip.**
 File `.svelte` juga punya `<script>`, markup, dan `<style>` dalam satu file,
@@ -253,3 +258,48 @@ sebelum dioper ke fungsi-fungsi `core.ts` (meski `core.ts` sendiri, sebagai
 TypeScript murni, tidak "tahu" itu proxy reaktif — ia hanya melihat objek
 biasa, persis seperti fungsi util Vue yang menerima `reactive()` object apa
 adanya).
+
+---
+
+## 5. Menjalankan verifikasi
+
+Tidak ada test runner "resmi" di proyek ini (tidak ada Vitest/Jest dengan unit
+test per fungsi). Verifikasi dilakukan lewat kombinasi type-check, simulasi
+headless, dan Playwright end-to-end, semuanya sebagai skrip di `scripts/` —
+kalau di dunia Vue biasa terpisah jadi `vue-tsc` + Vitest + Cypress, di sini
+ketiganya lebih ad-hoc tapi perannya sama.
+
+### 5.1 Perintah yang tersedia
+
+| Perintah | Apa yang dilakukan |
+|---|---|
+| `npm run check` | `svelte-check` — type-check semua `.ts`/`.svelte`, setara `vue-tsc --noEmit`. Cepat (hitungan detik). |
+| `npm run simulate` | Menjalankan `scripts/simulate.ts` lewat `vite-node` (headless, tanpa browser sama sekali). Memainkan 4 strategi bot × 3 karakter × 12 kali, tiap kali satu permainan 30-hari penuh, memakai **hanya** `engine/core.ts` + `data/` — tidak ada UI, tidak ada Svelte yang terlibat. Mencetak tingkat kelangsungan hidup, distribusi ending, dan penyebab kegagalan. Bentuk normalnya: bot "seimbang" lolos 12/12 (campuran ending rakyat/emas), bot "serakah" selalu berakhir 💼bisnis, bot "pasif" selalu mati sebelum hari ke-30. Kalau pola ini bergeser setelah perubahanmu, itu tandanya keseimbangan permainan ikut berubah. |
+| `node scripts/playtest.mjs` | Uji end-to-end Playwright: membuka Chrome sungguhan (`channel: 'chrome'`, headless), mengklik tombol asli selama 4 hari, menguji save/lanjut setelah reload halaman, memaksa satu ending hari-30 dan satu pilihan event fatal, lalu **gagal kalau ada error konsol apa pun**. Menulis screenshot ke `scripts/shots/`. **Butuh dev server sudah jalan** (lihat di bawah). |
+| `node scripts/fullrun.mjs` | Bot memainkan satu run 30-hari **secara alami** lewat browser sungguhan (bukan lewat `engine/core.ts` langsung seperti `simulate`), mencetak statistik hari-per-hari. Butuh dev server jalan juga. Lebih lambat (~2–4 menit). |
+| `node scripts/calibrate.mjs [fraksi...]` | Membekukan animasi ambient di peta (lalu lintas jalan, kunjungan kapal ke dermaga, burung) pada fraksi progres tertentu lalu memotret layarnya — dipakai untuk menyetel jalur dekorasi di `GameScreen.svelte`. |
+| `node scripts/motion-diag.mjs` | Membandingkan dua frame berjarak 2 detik (pixel diff) dan membaca style animasi terkomputasi di kedua kondisi `prefers-reduced-motion` — dipakai kalau ada laporan "tidak ada yang bergerak" (game memang sengaja membekukan semua animasi saat reduced-motion aktif, lihat `app.css`). |
+| `npm run build` | Build produksi ke `dist/`; lanjutkan dengan `npm run preview` untuk menyajikannya secara lokal. |
+
+`playtest.mjs` dan `fullrun.mjs` menembak `http://localhost:5199` — dev server
+harus dinyalakan manual di terminal terpisah dan dibiarkan tetap hidup selama
+skrip itu berjalan:
+
+```
+npx vite --port 5199 --strictPort
+```
+
+`--strictPort` membuatnya gagal jelas (bukan diam-diam pindah port) kalau 5199
+sudah dipakai proses lain. Folder `scripts/shots/` sudah masuk `.gitignore`,
+jadi tidak perlu dibersihkan manual sebelum commit.
+
+### 5.2 Jenis perubahan → verifikasi minimum
+
+| Jenis perubahan | Verifikasi minimum |
+|---|---|
+| Angka di `data/` (efek, biaya, cooldown, jadwal skenario, ambang ending) | `check` + `simulate` — **wajib**, karena keseimbangan bisa bergeser; `playtest` kalau sempat. |
+| `engine/core.ts` atau `types.ts` | `check` + `simulate` + `playtest`. |
+| Komponen `ui/*.svelte` atau `store.svelte.ts` | `check` + `playtest` (`simulate` tidak menyentuh UI sama sekali). |
+| Teks/copy saja (string literal) | `check` + `simulate` — output `simulate` harus **identik** dengan sebelum perubahan; itu buktinya tidak ada logika yang ikut tersentuh. |
+| Dekorasi ambient di `GameScreen.svelte` | `check` + `calibrate`/`motion-diag` untuk cek visual, + `playtest` untuk memastikan tidak ada error konsol. |
+| Sebelum setor/deploy | semua di atas, ditambah `npm run build`. |
