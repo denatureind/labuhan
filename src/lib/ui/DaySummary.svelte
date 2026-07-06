@@ -6,7 +6,18 @@
   const s = $derived(game.state!);
   const deltas = $derived(game.deltas);
   const warnings = $derived(STAT_KEYS.filter((k) => s.stats[k] <= DANGER_ZONE));
+
+  /* Enter = sambut hari berikutnya. Cek fase dulu — jangan sampai satu Enter
+     nyasar melompati dua layar; dilewati pula bila fokus di tombol/input. */
+  function onKey(e: KeyboardEvent) {
+    if (e.key !== 'Enter' || e.repeat || s.phase !== 'summary') return;
+    if ((e.target as HTMLElement)?.closest?.('button, input, textarea, select')) return;
+    e.preventDefault();
+    game.toNextDay();
+  }
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <div class="overlay">
   <div class="card panel">
@@ -53,7 +64,7 @@
     padding: 20px;
     background: linear-gradient(180deg, rgba(30, 22, 48, 0.72), rgba(4, 12, 26, 0.85));
     backdrop-filter: blur(4px);
-    animation: dusk 0.7s ease both;
+    animation: dusk 0.4s ease both;
   }
 
   @keyframes dusk {
@@ -65,7 +76,7 @@
   .card {
     width: min(480px, 100%);
     padding: 24px 26px;
-    animation: float-up 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: float-up 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
   h2 {

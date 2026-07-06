@@ -220,10 +220,23 @@
             <span class="slot" class:used={i >= s.slots}>⏱</span>
           {/each}
         </div>
-        <button class="btn btn-lampu" onclick={() => game.closeDay()}>🌙 Akhiri Hari</button>
+        <button
+          class="btn btn-lampu"
+          onclick={() => game.closeDay()}
+          title={s.slots > 0 ? `Masih ada ${s.slots} jam kerja tersisa` : 'Semua jam kerja terpakai'}
+        >
+          🌙 Akhiri Hari{#if s.slots > 0}<span class="slots-left">⏱{s.slots}</span>{/if}
+        </button>
       </div>
     {/if}
   </footer>
+
+  <!-- Petunjuk sekali-tayang di hari pertama: hilang begitu aksi pertama dikerjakan -->
+  {#if s.day === 1 && s.phase === 'manage' && s.totalActions === 0 && !layoutEditor.active && !game.openFacility}
+    <div class="first-hint" aria-hidden="true">
+      💡 Klik bangunan di peta untuk bekerja — kamu punya ⏱ {SLOTS_PER_DAY} jam kerja per hari
+    </div>
+  {/if}
 
   <!-- ── Lapisan fase ── -->
   {#if s.phase === 'morning'}
@@ -687,6 +700,47 @@
   .slot.used {
     opacity: 0.25;
     filter: grayscale(1);
+  }
+
+  .slots-left {
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(58, 38, 3, 0.22);
+    border: 1px solid rgba(58, 38, 3, 0.3);
+  }
+
+  .first-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 86px;
+    transform: translateX(-50%);
+    z-index: 25;
+    max-width: min(92vw, 480px);
+    text-align: center;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--busa);
+    background: rgba(8, 23, 41, 0.92);
+    border: 1px solid var(--lampu);
+    border-radius: 999px;
+    padding: 10px 18px;
+    box-shadow: 0 8px 30px rgba(245, 184, 65, 0.18);
+    pointer-events: none;
+    animation: hint-in 0.5s 0.6s ease both;
+  }
+
+  @keyframes hint-in {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%);
+    }
   }
 
   .edit-toggle {

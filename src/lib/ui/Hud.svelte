@@ -2,11 +2,22 @@
   import { game } from '../engine/store.svelte';
   import { STATS } from '../data/stats';
   import { SCENARIOS, SCENARIO_SCHEDULE } from '../data/scenarios';
+  import { getCharacter } from '../data/characters';
   import { STAT_KEYS, TOTAL_DAYS, DANGER_ZONE } from '../types';
   import { isMuted, toggleMute, sfx } from '../audio/sfx';
 
   let muted = $state(isMuted());
   const s = $derived(game.state!);
+
+  /* Perubahan bersih HARI INI per indikator: nilai sekarang dibanding catatan
+     akhir hari kemarin (atau nilai awal karakter di hari pertama). Melengkapi
+     delta melayang yang cuma tampil ~2 detik — pemain bisa lihat "apa yang
+     bocor hari ini" kapan pun tanpa menunggu rangkuman malam. */
+  const trendBase = $derived(
+    s.history.length > 0
+      ? s.history[s.history.length - 1].stats
+      : getCharacter(s.characterId).startStats,
+  );
 
   /* Strip pasang-surut: 30 hari sebagai barometer — badai terjadwal terlihat samar
      sebelum tiba, seperti barometer yang turun. */
@@ -63,15 +74,23 @@
     <div class="gauges">
       {#each STAT_KEYS as key (key)}
         {@const v = s.stats[key]}
+        {@const trend = v - trendBase[key]}
         <div
           class="gauge"
           class:danger={v <= DANGER_ZONE}
-          title="{STATS[key].label}: {v}/100 — {STATS[key].desc}"
+          title="{STATS[key].label}: {v}/100 — {STATS[key].desc}{trend !== 0
+            ? ` (hari ini ${trend > 0 ? '+' : ''}${trend})`
+            : ''}"
         >
           <span class="g-icon">{STATS[key].icon}</span>
           <div class="g-body">
             <div class="g-top">
               <span class="g-label">{STATS[key].label}</span>
+              {#if trend !== 0}
+                <span class="g-trend {trend > 0 ? 'naik' : 'turun'}">
+                  {trend > 0 ? '▲' : '▼'}{Math.abs(trend)}
+                </span>
+              {/if}
               <span class="g-num">{v}</span>
             </div>
             <div class="g-track">
@@ -265,6 +284,21 @@
     font-size: 13.5px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
+  }
+
+  .g-trend {
+    font-size: 10px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .g-trend.naik {
+    color: var(--bakau);
+  }
+
+  .g-trend.turun {
+    color: var(--karang);
   }
 
   .g-track {

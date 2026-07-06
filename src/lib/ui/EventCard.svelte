@@ -28,7 +28,26 @@
       return { icon: STATS[key]?.icon ?? '❔', dir };
     });
   }
+
+  /* Angka 1–3 = pilih; Enter = lanjut setelah memilih. Dilewati bila fokus
+     di tombol/input agar tak dobel dengan aksi bawaan browser. */
+  function onKey(e: KeyboardEvent) {
+    if (e.repeat || !event) return;
+    if ((e.target as HTMLElement)?.closest?.('button, input, textarea, select')) return;
+    if (!chosen && ['1', '2', '3'].includes(e.key)) {
+      const c = event.choices[Number(e.key) - 1];
+      if (c && canAfford(s, c.cost)) {
+        e.preventDefault();
+        choose(c);
+      }
+    } else if (chosen && e.key === 'Enter') {
+      e.preventDefault();
+      game.finishEvent();
+    }
+  }
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 {#if event && npc}
   <div class="overlay">
@@ -55,8 +74,9 @@
               class="choice"
               disabled={!affordable}
               onclick={() => choose(c)}
-              style="animation-delay: {0.1 + i * 0.09}s"
+              style="animation-delay: {0.06 + i * 0.06}s"
             >
+              <span class="c-key" aria-hidden="true">{i + 1}</span>
               <span class="c-label">
                 {c.label}
                 {#if c.cost}
@@ -110,7 +130,7 @@
     padding: 20px;
     background: rgba(4, 12, 26, 0.6);
     backdrop-filter: blur(3px);
-    animation: fade 0.35s ease both;
+    animation: fade 0.22s ease both;
   }
 
   @keyframes fade {
@@ -125,7 +145,7 @@
     overflow-y: auto;
     padding: 22px 26px 24px;
     border-top: 4px solid var(--npc);
-    animation: deal 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: deal 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
   @keyframes deal {
@@ -234,6 +254,25 @@
   .choice:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+  }
+
+  .c-key {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--busa-redup);
+    border: 1px solid var(--garis-buih);
+    border-radius: 5px;
+    background: rgba(8, 23, 41, 0.75);
+  }
+
+  .choice:hover:not(:disabled) .c-key {
+    color: var(--lampu-terang);
+    border-color: var(--lampu);
   }
 
   .c-label {

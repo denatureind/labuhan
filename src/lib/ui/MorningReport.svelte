@@ -16,7 +16,18 @@
   const phaseLabel = $derived(
     s.day <= 10 ? 'Masa Perkenalan' : s.day <= 20 ? 'Masa Eskalasi' : s.day < 30 ? 'Masa Krisis' : 'Hari Evaluasi',
   );
+
+  /* Enter = Mulai Hari — memangkas klik untuk 30 pagi berturut-turut.
+     Dilewati bila fokus sedang di tombol/input agar tak dobel dengan aksi bawaan. */
+  function onKey(e: KeyboardEvent) {
+    if (e.key !== 'Enter' || e.repeat) return;
+    if ((e.target as HTMLElement)?.closest?.('button, input, textarea, select')) return;
+    e.preventDefault();
+    game.startEventPhase();
+  }
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <div class="overlay">
   <div class="card panel">
@@ -36,7 +47,7 @@
     <div class="report">
       <p class="r-title">Laporan pagi</p>
       {#each s.morningReport as item, i (i)}
-        <div class="row" style="animation-delay: {0.15 + i * 0.08}s">
+        <div class="row" style="animation-delay: {0.08 + i * 0.05}s">
           <span class="r-icon">{item.icon}</span>
           <span class="r-label">{item.label}</span>
           <span class="r-chips">
@@ -67,7 +78,7 @@
     padding: 20px;
     background: rgba(4, 12, 26, 0.55);
     backdrop-filter: blur(3px);
-    animation: fade 0.4s ease both;
+    animation: fade 0.25s ease both;
   }
 
   @keyframes fade {
@@ -82,7 +93,7 @@
     overflow-y: auto;
     padding: 26px 28px 24px;
     text-align: center;
-    animation: float-up 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: float-up 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
   .day {
