@@ -13,7 +13,7 @@ export const FACILITIES: FacilityDef[] = [
     icon: '⚓',
     tagline: 'Jantung bongkar-muat pelabuhan',
     sprite: `${IMG}/dermaga.png`,
-    pos: { x: 67, y: 66, w: 17 },
+    pos: { x: 70.8, y: 42.4, w: 15 },
     actions: [
       {
         id: 'bongkar-ekspres',
@@ -48,7 +48,7 @@ export const FACILITIES: FacilityDef[] = [
     icon: '🏬',
     tagline: 'Logistik dan penyimpanan kargo',
     sprite: `${IMG}/gudang.png`,
-    pos: { x: 30, y: 41, w: 19 },
+    pos: { x: 47.1, y: 26.9, w: 19 },
     actions: [
       {
         id: 'sewa-gudang',
@@ -86,7 +86,7 @@ export const FACILITIES: FacilityDef[] = [
     icon: '🏢',
     tagline: 'Administrasi dan kebijakan',
     sprite: `${IMG}/kantor.png`,
-    pos: { x: 44, y: 19, w: 12.5 },
+    pos: { x: 45.6, y: 65.7, w: 14 },
     actions: [
       {
         id: 'pelatihan-k3',
@@ -136,7 +136,7 @@ export const FACILITIES: FacilityDef[] = [
     icon: '🦐',
     tagline: 'Budidaya pesisir dan sabuk hijau',
     sprite: `${IMG}/tambak.png`,
-    pos: { x: 42, y: 55, w: 17 },
+    pos: { x: 30.3, y: 44.7, w: 20 },
     actions: [
       {
         id: 'panen-tambak',
@@ -208,7 +208,7 @@ export const FACILITIES: FacilityDef[] = [
     icon: '🐟',
     tagline: 'Denyut ekonomi rakyat pesisir',
     sprite: `${IMG}/pasar.png`,
-    pos: { x: 8, y: 37, w: 18 },
+    pos: { x: 44.3, y: 53.9, w: 19 },
     actions: [
       {
         id: 'lelang-ikan',
