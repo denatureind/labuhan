@@ -1,5 +1,17 @@
 # Pelabuhan Hijau: Muara Harapan
 
+> *Pelabuhan Hijau: Muara Harapan* menempatkan pemain sebagai pemimpin baru sebuah
+> pelabuhan kecil di pesisir Indonesia selama 30 hari, menjaga enam indikator —
+> Dana, Reputasi, Lingkungan, SDM, Infrastruktur, Komunitas — yang mustahil
+> dimaksimalkan bersamaan. Setiap hari satu dilema memaksa pemain memilih siapa
+> yang dikecewakan: investor, laut, atau warga — tak ada pilihan tanpa harga, dan
+> keputusan kotor akan kembali menagih lewat kartu konsekuensi. Dunia terus
+> bergerak sendiri: badai musiman menuntut persiapan, pelabuhan yang beroperasi
+> mengikis dirinya setiap pagi, dan bermain terlalu aman justru jalan tercepat
+> menuju kegagalan. Lima gelar akhir tidak mengukur skor, melainkan watak
+> kepemimpinan yang pemain bangun — sebab keberlanjutan, seperti di dunia nyata,
+> adalah seni memilih luka yang paling bisa dipertanggungjawabkan.
+
 Game simulasi-naratif berbahasa Indonesia: kamu memimpin pelabuhan kecil di pesisir
 selama **30 hari operasional**, menyeimbangkan enam indikator (Dana, Reputasi,
 Lingkungan, SDM, Infrastruktur, Komunitas) di persimpangan kepentingan bisnis, laut,

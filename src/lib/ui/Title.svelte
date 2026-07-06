@@ -1,8 +1,10 @@
 <script lang="ts">
   import { game } from '../engine/store.svelte';
   import { sfx, isMuted, toggleMute } from '../audio/sfx';
+  import HowToPlay from './HowToPlay.svelte';
 
   let muted = $state(isMuted());
+  let showHow = $state(false);
 
   function onMute() {
     muted = toggleMute();
@@ -22,8 +24,8 @@
       <span class="logo-main">Muara Harapan</span>
     </h1>
     <p class="tagline rise" style="animation-delay: 0.5s">
-      Tiga puluh hari memimpin di persimpangan tiga arus:
-      bisnis yang menuntut, laut yang berbisik, dan rakyat yang berharap.
+      Bisnis menuntut. Laut berbisik. Rakyat berharap.
+      <span class="tagline-clock">Kau punya tiga puluh hari.</span>
     </p>
 
     <div class="actions rise" style="animation-delay: 0.68s">
@@ -36,6 +38,13 @@
           }}>Lanjutkan Jabatan</button
         >
       {/if}
+      <button
+        class="btn"
+        onclick={() => {
+          sfx.open();
+          showHow = true;
+        }}>Cara Bermain</button
+      >
     </div>
 
     <p class="hint rise" style="animation-delay: 0.85s">
@@ -47,6 +56,10 @@
     {muted ? '🔇' : '🔊'}
   </button>
   <p class="credit">Aset 3D: Kenney.nl (CC0)</p>
+
+  {#if showHow}
+    <HowToPlay onclose={() => (showHow = false)} />
+  {/if}
 </div>
 
 <style>
@@ -139,6 +152,13 @@
     max-width: 52ch;
     margin: 0 auto 30px;
     text-wrap: balance;
+  }
+
+  .tagline-clock {
+    display: block;
+    margin-top: 4px;
+    color: var(--lampu-terang);
+    font-weight: 700;
   }
 
   .actions {

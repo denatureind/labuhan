@@ -82,7 +82,7 @@ export function statVerdict(key: StatKey, v: number): string {
     ],
     sdm: [
       'Pekerja letih dan getir; loyalitas tinggal ampas.',
-      'Buruh bekerja sebagaimana mestinya — tak lebih.',
+      'Buruh datang, bekerja, pulang — setianya sebatas slip gaji.',
       'Kru pelabuhan solid, terlatih, dan bangga pada seragamnya.',
     ],
     infrastruktur: [
@@ -91,7 +91,7 @@ export function statVerdict(key: StatKey, v: number): string {
       'Peralatan prima — pelabuhan sebelah datang studi banding.',
     ],
     komunitas: [
-      'Kampung pesisir memandang pelabuhan sebagai musuh.',
+      'Di kampung pesisir, "pelabuhan" sudah jadi kata lain untuk musuh.',
       'Warga dan pelabuhan hidup berdampingan, saling menjaga jarak.',
       'Pelabuhan dan kampung sudah seperti satu keluarga besar.',
     ],
