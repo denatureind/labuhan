@@ -191,6 +191,50 @@ export interface GameState {
   totalActions: number;
 }
 
+/** Satu titik pada jalur kendaraan/kapal — persen posisi di atas panggung peta. */
+export interface TrafficPoint {
+  x: number;
+  y: number;
+  /** Jeda diam tambahan (ms) di titik ini, mis. kapal bongkar-muat di dermaga. */
+  pauseMs?: number;
+  /** Mulai segmen SETELAH titik ini, sprite dibalik horizontal (putar haluan). */
+  flipAfter?: boolean;
+  /** Sudut putar (derajat) saat tiba di titik ini; berangsur dari sudut titik sebelumnya. */
+  rotateDeg?: number;
+}
+
+/** Satu kendaraan/kapal yang bergerak sendiri di peta (dekorasi ambient). */
+export interface TrafficVehicle {
+  id: string;
+  sprite: string;
+  /** Lebar sprite, persen terhadap lebar panggung. */
+  width: number;
+  /** Total durasi satu putaran penuh (ms), termasuk waktu ia tak terlihat. */
+  cycleMs: number;
+  /** Berapa lama (ms) dari cycleMs ia benar-benar terlihat berjalan. */
+  driveMs: number;
+  /** Offset awal (ms, biasanya negatif) agar kendaraan tidak muncul serentak. */
+  delayMs: number;
+  /** Efek naik-turun halus (dipakai kapal mengambang). */
+  bob?: boolean;
+  /** false = tidak dirender/dianimasikan sama sekali. Default true bila kosong. */
+  enabled?: boolean;
+  /** Titik-titik jalur, berurutan. Minimal 2. */
+  points: TrafficPoint[];
+}
+
+/** Aset hias statis di peta (bangunan tambahan, orang, properti) — tidak
+ * bergerak, tidak bisa diklik, cuma variasi visual. */
+export interface DecorItem {
+  id: string;
+  sprite: string;
+  /** Posisi & lebar, persen terhadap panggung — sama seperti fasilitas. */
+  x: number;
+  y: number;
+  w: number;
+  rotateDeg?: number;
+}
+
 export const SLOTS_PER_DAY = 3;
 export const TOTAL_DAYS = 30;
 /** Di bawah ini, bar menyala merah dan peringatan muncul. */

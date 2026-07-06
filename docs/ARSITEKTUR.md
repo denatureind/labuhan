@@ -56,7 +56,12 @@ src/
     │   │                        kemampuan (ability) + cooldown, crop portrait.
     │   ├── facilities.ts        6 fasilitas + aksi-aksinya (biaya, efek, cooldown,
     │   │                        posisi %x/%y di peta). ← edit di sini untuk ubah
-    │   │                        biaya/efek/cooldown sebuah aksi.
+    │   │                        biaya/efek/cooldown sebuah aksi. Posisinya sendiri
+    │   │                        jangan diedit dengan tangan — pakai "🛠️ Edit Tata
+    │   │                        Letak" (lihat bawah).
+    │   ├── traffic.ts           Jalur mobil + kapal kargo ambient (titik-titik %x/%y
+    │   │                        + waktu). Ditulis otomatis oleh "🛠️ Edit Tata
+    │   │                        Letak" — jangan edit dengan tangan.
     │   ├── events.ts            ~40 kartu kejadian (dilema harian) + 6 kejadian
     │   │                        terjadwal (field `day`). ← edit/tambah kartu di sini.
     │   ├── scenarios.ts         8 skenario multi-hari (badai, panen ikan, dst)
@@ -77,10 +82,17 @@ src/
     │   ├── rng.ts                RNG seeded (mulberry32) supaya undian kartu
     │   │                        deterministik dari `state.seed` — save/load
     │   │                        tidak mengubah kartu yang "seharusnya" muncul.
-    │   └── store.svelte.ts       Lapisan reaktif: bungkus core.ts dengan $state,
-    │                            trigger SFX, autosave ke localStorage, kelola
-    │                            transisi layar. Ini satu-satunya file yang
-    │                            dipakai langsung oleh komponen UI.
+    │   ├── store.svelte.ts       Lapisan reaktif: bungkus core.ts dengan $state,
+    │   │                        trigger SFX, autosave ke localStorage, kelola
+    │   │                        transisi layar. Ini satu-satunya file yang
+    │   │                        dipakai langsung oleh komponen UI.
+    │   ├── traffic.ts            buildTrafficFrames(): ubah titik-titik data/traffic.ts
+    │   │                        jadi keyframes Web Animations API (posisi %, bukan
+    │   │                        vw/vh — lihat §4h soal kenapa itu penting).
+    │   └── editorStore.svelte.ts State "🛠️ Edit Tata Letak" (dev-only): salinan kerja
+    │                            facilities/traffic yang bisa diseret bebas, plus
+    │                            saveFacilities()/saveTraffic() yang POST ke endpoint
+    │                            vite.config.ts. Lihat §6.
     │
     ├── audio/
     │   └── sfx.ts               Semua bunyi disintesis via WebAudio (osilator +
@@ -102,7 +114,8 @@ src/
         ├── DaySummary.svelte     Modal rangkuman akhir hari (fase 'summary').
         ├── WeatherFX.svelte      Overlay hujan (canvas) / kilau cerah.
         ├── HistoryChart.svelte   Grafik SVG 6-garis di layar akhir.
-        └── OverScreen.svelte     Layar akhir (ending atau kegagalan).
+        ├── OverScreen.svelte     Layar akhir (ending atau kegagalan).
+        └── LayoutEditor.svelte   Panel "🛠️ Edit Tata Letak" (dev-only, lihat §6).
 ```
 
 **Skenario ubah-konten yang sering:**
@@ -303,3 +316,49 @@ jadi tidak perlu dibersihkan manual sebelum commit.
 | Teks/copy saja (string literal) | `check` + `simulate` — output `simulate` harus **identik** dengan sebelum perubahan; itu buktinya tidak ada logika yang ikut tersentuh. |
 | Dekorasi ambient di `GameScreen.svelte` | `check` + `calibrate`/`motion-diag` untuk cek visual, + `playtest` untuk memastikan tidak ada error konsol. |
 | Sebelum setor/deploy | semua di atas, ditambah `npm run build`. |
+
+---
+
+## 6. "🛠️ Edit Tata Letak" — menyusun posisi bangunan & jalur kendaraan
+
+Tombol ini muncul di pojok kanan-atas `GameScreen.svelte` **hanya saat
+`npm run dev`** (dijaga oleh `import.meta.env.DEV`, jadi tidak pernah ikut ke
+build produksi). Dibuat karena posisi bangunan/jalur kendaraan di peta adalah
+hal yang jauh lebih mudah disusun dengan mata lewat seret-dan-lepas daripada
+menebak angka persen secara manual di kode.
+
+**Cara pakai:**
+
+1. `npm run dev`, mainkan sampai masuk peta (fase `manage`).
+2. Klik **🛠️ Edit Tata Letak**. Semua bangunan dapat diseret langsung di peta;
+   angka x/y/lebar di panel kanan ikut berubah live (atau ketik langsung di
+   kotak angkanya untuk presisi).
+3. Pilih satu kendaraan/kapal di baris "Jalur Kendaraan & Kapal", lalu klik di
+   atas peta untuk menambah titik di ujung jalurnya. Titik yang sudah ada bisa
+   diseret, atau dipilih lalu digeser dengan tombol panah (Shift = lompatan
+   lebih besar), Delete untuk menghapus. Tombol **▶ Pratinjau Jalur** memutar
+   sekali animasinya di tempat untuk mengecek kecepatan/waktu.
+4. **💾 Simpan** menulis perubahan langsung ke `data/facilities.ts` atau
+   `data/traffic.ts` lewat endpoint dev-only di `vite.config.ts`
+   (`layoutEditorPlugin`), lalu memuat ulang halaman.
+
+**Kenapa halaman dimuat ulang setelah Simpan:** menulis file itu memicu Vite
+HMR, dan di proyek ini rantai importnya berujung me-remount seluruh `App`
+(App.svelte mengimpor Title/CharacterSelect/GameScreen/OverScreen sekaligus).
+Daripada melawan itu, `editorStore.svelte.ts` sengaja menyimpan draf ke
+`sessionStorage` lalu memanggil `location.reload()` sendiri setelah Simpan
+berhasil — hasilnya lebih pasti (memuat definisi baru apa adanya) dan draf +
+kendaraan yang sedang dipilih otomatis dipulihkan setelah reload (lihat
+`RELOAD_FLAG_KEY` di `App.svelte`, yang juga memanggil `game.continueGame()`
+supaya permainan yang sedang berjalan tidak ikut kembali ke layar judul).
+
+**Model data jalur (`TrafficVehicle`/`TrafficPoint` di `types.ts`):** tiap
+kendaraan adalah daftar titik `{x, y}` (persen terhadap panggung peta — satuan
+yang **sama** dengan `pos` fasilitas), bukan lagi jarak `vw`/`vh` seperti versi
+lama. Ini bukan cuma soal kemudahan edit — versi lama mencampur posisi awal
+dalam `%` dengan jarak tempuh dalam `vw`/`vh`, padahal lebar panggung sendiri
+adalah `max(103vw, 137.3vh)`: di jendela sempit/tinggi (137.3vh menang), jarak
+`vw` tetap tapi panggung jadi jauh lebih lebar dari 100vw, sehingga kendaraan
+berhenti jauh sebelum sampai ke jalan yang dituju. Memakai `%` untuk titik
+jalur (dianimasikan lewat Web Animations API di `engine/traffic.ts`, bukan
+`@keyframes` CSS tetap) membuat jalur konsisten di semua ukuran layar.

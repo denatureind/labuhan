@@ -1,16 +1,86 @@
 <script lang="ts">
   import { game } from '../engine/store.svelte';
-  import { FACILITIES } from '../data/facilities';
+  import { TRAFFIC } from '../data/traffic';
+  import { buildTrafficFrames } from '../engine/traffic';
+  import { layoutEditor } from '../engine/editorStore.svelte';
   import { SCENARIOS } from '../data/scenarios';
   import { getCharacter } from '../data/characters';
   import { SLOTS_PER_DAY } from '../types';
+  import type { TrafficVehicle, FacilityDef, DecorItem } from '../types';
   import Hud from './Hud.svelte';
   import MorningReport from './MorningReport.svelte';
   import EventCard from './EventCard.svelte';
   import FacilityPanel from './FacilityPanel.svelte';
   import DaySummary from './DaySummary.svelte';
   import WeatherFX from './WeatherFX.svelte';
+  import LayoutEditor from './LayoutEditor.svelte';
   import { sfx } from '../audio/sfx';
+
+  /** Semua Animation yang lagi berjalan, supaya bisa dijeda saat mode edit aktif. */
+  const runningAnims: Animation[] = [];
+
+  /** Animasikan satu kendaraan/kapal lewat Web Animations API dari data TRAFFIC. */
+  function drive(node: HTMLElement, v: TrafficVehicle) {
+    const anim = node.animate(buildTrafficFrames(v), {
+      duration: v.cycleMs,
+      delay: v.delayMs,
+      iterations: Infinity,
+      easing: 'linear',
+    });
+    runningAnims.push(anim);
+    return {
+      destroy() {
+        anim.cancel();
+        const i = runningAnims.indexOf(anim);
+        if (i >= 0) runningAnims.splice(i, 1);
+      },
+    };
+  }
+
+  $effect(() => {
+    for (const a of runningAnims) (layoutEditor.active ? a.pause() : a.play());
+  });
+
+  function toggleEditor() {
+    layoutEditor.active = !layoutEditor.active;
+    mx = 0;
+    my = 0;
+  }
+
+  /** Seret marker bangunan/dekorasi di peta saat mode edit aktif. */
+  function startDragXY(onMove: (x: number, y: number) => void, e: PointerEvent) {
+    if (!layoutEditor.active) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const stage = (e.currentTarget as HTMLElement).closest('.stage') as HTMLElement;
+    const move = (ev: PointerEvent) => {
+      const r = stage.getBoundingClientRect();
+      onMove(
+        Math.round(((ev.clientX - r.x) / r.width) * 1000) / 10,
+        Math.round(((ev.clientY - r.y) / r.height) * 1000) / 10,
+      );
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  function startDragFacility(f: FacilityDef, e: PointerEvent) {
+    startDragXY((x, y) => {
+      f.pos.x = x;
+      f.pos.y = y;
+    }, e);
+  }
+
+  function startDragDecor(d: DecorItem, e: PointerEvent) {
+    startDragXY((x, y) => {
+      d.x = x;
+      d.y = y;
+    }, e);
+  }
 
   const s = $derived(game.state!);
   const character = $derived(getCharacter(s.characterId));
@@ -38,6 +108,7 @@
   let mx = $state(0);
   let my = $state(0);
   function onMove(e: MouseEvent) {
+    if (layoutEditor.active) return;
     mx = (e.clientX / window.innerWidth - 0.5) * 2;
     my = (e.clientY / window.innerHeight - 0.5) * 2;
   }
@@ -60,32 +131,47 @@
       <div class="sea-shimmer" aria-hidden="true"></div>
       <div class="sea-drift" aria-hidden="true"></div>
 
-      <!-- Lalu lintas darat: di bawah bangunan agar teroklusi wajar -->
+      <!-- Lalu lintas darat & kapal: di bawah bangunan agar teroklusi wajar -->
       <div class="traffic" aria-hidden="true">
-        <img class="veh sedan" src="./assets/images/sedan.png" alt="" />
-        <img class="veh mvp" src="./assets/images/mvp.png" alt="" />
-        <img class="veh boxtruck" src="./assets/images/box.png" alt="" />
-        <img class="veh truk" src="./assets/images/truk.png" alt="" />
+        {#each TRAFFIC.filter((v) => v.enabled !== false) as v (v.id)}
+          {#if v.bob}
+            <div class="veh-wrap" style="width: {v.width}%" use:drive={v}>
+              <img class="veh-img bob" src={v.sprite} alt="" />
+            </div>
+          {:else}
+            <img class="veh-img" style="width: {v.width}%" src={v.sprite} alt="" use:drive={v} />
+          {/if}
+        {/each}
       </div>
 
-      {#each FACILITIES as f (f.id)}
+      {#each layoutEditor.facilities as f (f.id)}
         <button
           class="facility"
-          class:bob={f.id === 'kapal'}
-          class:disabled={s.phase !== 'manage'}
+          class:bob={f.id === 'kapal' && !layoutEditor.active}
+          class:disabled={s.phase !== 'manage' || layoutEditor.active}
+          class:editing={layoutEditor.active}
           style="left: {f.pos.x}%; top: {f.pos.y}%; width: {f.pos.w}%"
-          onclick={() => openFacility(f.id)}
-          title={f.name}
+          onclick={() => !layoutEditor.active && openFacility(f.id)}
+          onpointerdown={(e) => startDragFacility(f, e)}
+          title={layoutEditor.active ? `${f.name} (seret untuk pindah)` : f.name}
         >
           <img src={f.sprite} alt={f.name} draggable="false" />
           <span class="plate"><span>{f.icon}</span>{f.name}</span>
         </button>
       {/each}
 
-      <!-- Kapal kargo: singgah ke dermaga lalu berlayar pergi -->
-      <div class="ship-track" aria-hidden="true">
-        <img class="ship-img" src="./assets/images/kargo.png" alt="" />
-      </div>
+      <!-- Dekorasi statis: bangunan tambahan, orang, properti — murni hiasan -->
+      {#each layoutEditor.decor as d (d.id)}
+        <div
+          class="decor"
+          class:editing={layoutEditor.active}
+          style="left: {d.x}%; top: {d.y}%; width: {d.w}%; transform: translate(-50%, -55%) rotate({d.rotateDeg ?? 0}deg)"
+          onpointerdown={(e) => startDragDecor(d, e)}
+          role="presentation"
+        >
+          <img src={d.sprite} alt="" draggable="false" />
+        </div>
+      {/each}
 
       <!-- Camar menyeberangi peta -->
       <div class="birds" aria-hidden="true">
@@ -98,6 +184,15 @@
 
   <WeatherFX storm={stormActive} sunny={goodActive} />
   <Hud />
+
+  {#if import.meta.env.DEV}
+    <button class="edit-toggle" onclick={toggleEditor}>
+      {layoutEditor.active ? '✕ Tutup Editor' : '🛠️ Edit Tata Letak'}
+    </button>
+    {#if layoutEditor.active}
+      <LayoutEditor />
+    {/if}
+  {/if}
 
   <!-- ── Bilah bawah ── -->
   <footer class="bottom">
@@ -243,6 +338,16 @@
     cursor: default;
   }
 
+  .facility.editing {
+    cursor: grab;
+    outline: 2px dashed rgba(245, 184, 65, 0.6);
+    outline-offset: 3px;
+  }
+
+  .facility.editing:active {
+    cursor: grabbing;
+  }
+
   .facility img {
     width: 100%;
     transition: filter 0.2s ease;
@@ -252,6 +357,31 @@
 
   .facility.bob {
     animation: bob 4.5s ease-in-out infinite;
+  }
+
+  /* ── Dekorasi statis (bangunan tambahan, orang, properti) ── */
+  .decor {
+    position: absolute;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 10px rgba(2, 8, 20, 0.3));
+  }
+
+  .decor img {
+    width: 100%;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .decor.editing {
+    pointer-events: auto;
+    cursor: grab;
+    outline: 2px dashed rgba(88, 192, 138, 0.6);
+    outline-offset: 3px;
+  }
+
+  .decor.editing:active {
+    cursor: grabbing;
   }
 
   .plate {
@@ -287,174 +417,29 @@
     translate: 0 0;
   }
 
-  /* ── Lalu lintas darat ─────────────────────────────────────────
-     Sprite kendaraan menghadap barat-daya (kiri-bawah). Jalan isometrik
-     punya dua keluarga arah; perjalanan ke tenggara memakai scaleX(-1).
-     Tiap kendaraan: fade-in di satu tepi, melintas, fade-out di tepi lain,
-     lalu menunggu (bagian sisa siklus) sebelum muncul lagi. */
+  /* ── Lalu lintas darat & kapal ──────────────────────────────────
+     Posisi/arah digerakkan lewat Web Animations API (lihat use:drive di
+     script), dibangun dari titik-titik jalur persen di data/traffic.ts —
+     bukan lagi @keyframes tetap. Sengaja begitu supaya "🛠️ Edit Tata
+     Letak" bisa menulis ulang titik jalurnya tanpa menyentuh CSS. */
   .traffic {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
 
-  .veh {
+  .veh-img,
+  .veh-wrap {
     position: absolute;
     opacity: 0;
     filter: drop-shadow(0 5px 8px rgba(2, 8, 20, 0.3));
   }
 
-  /* Jalur A (timur-laut → barat-daya, lewat simpang tengah) */
-  .veh.sedan {
-    width: 3.4%;
-    left: 60%;
-    top: 20.8%;
-    animation: drive-sw 46s linear -9s infinite;
-  }
-
-  @keyframes drive-sw {
-    0% {
-      transform: translate(0, 0);
-      opacity: 0;
-    }
-    3% {
-      opacity: 1;
-    }
-    52% {
-      transform: translate(-34vw, 17vw);
-      opacity: 1;
-    }
-    56% {
-      transform: translate(-37vw, 18.5vw);
-      opacity: 0;
-    }
-    100% {
-      transform: translate(-37vw, 18.5vw);
-      opacity: 0;
-    }
-  }
-
-  /* Jalur B (barat-laut → tenggara, jalan yang sama dipakai dua kendaraan
-     dengan fase & tempo berbeda) */
-  .veh.mvp {
-    width: 3.7%;
-    left: 28%;
-    top: 26.5%;
-    animation: drive-se 52s linear -31s infinite;
-  }
-
-  .veh.boxtruck {
-    width: 4.1%;
-    left: 28%;
-    top: 27.3%; /* lajur sebelah, agar tak menumpuk persis dengan mvp */
-    animation: drive-se 61s linear -4s infinite;
-  }
-
-  @keyframes drive-se {
-    0% {
-      transform: translate(0, 0) scaleX(-1);
-      opacity: 0;
-    }
-    4% {
-      opacity: 1;
-    }
-    55% {
-      transform: translate(33vw, 16.5vw) scaleX(-1);
-      opacity: 1;
-    }
-    59% {
-      transform: translate(36vw, 18vw) scaleX(-1);
-      opacity: 0;
-    }
-    100% {
-      transform: translate(36vw, 18vw) scaleX(-1);
-      opacity: 0;
-    }
-  }
-
-  /* Jalur C (jalan angkut tepi tapak, menuju pesisir) */
-  .veh.truk {
-    width: 4.6%;
-    left: 21.5%;
-    top: 49%;
-    animation: drive-haul 40s linear -20s infinite;
-  }
-
-  @keyframes drive-haul {
-    0% {
-      transform: translate(0, 0) scaleX(-1);
-      opacity: 0;
-    }
-    5% {
-      opacity: 1;
-    }
-    48% {
-      transform: translate(23vw, 11.5vw) scaleX(-1);
-      opacity: 1;
-    }
-    53% {
-      transform: translate(26vw, 13vw) scaleX(-1);
-      opacity: 0;
-    }
-    100% {
-      transform: translate(26vw, 13vw) scaleX(-1);
-      opacity: 0;
-    }
-  }
-
-  /* ── Kapal kargo: datang dari laut lepas, sandar di dermaga, pergi lagi ── */
-  .ship-track {
-    position: absolute;
-    width: 9%;
-    left: 93%;
-    top: 71%;
-    animation: sail-visit 84s linear infinite;
-    pointer-events: none;
-    opacity: 0;
-  }
-
-  .ship-img {
+  .veh-wrap .veh-img {
+    position: static;
     width: 100%;
-    animation: bob 6s ease-in-out infinite;
+    opacity: 1;
     filter: drop-shadow(0 8px 14px rgba(2, 8, 20, 0.3));
-  }
-
-  @keyframes sail-visit {
-    0% {
-      transform: translate(0, 0);
-      opacity: 0;
-    }
-    5% {
-      opacity: 1;
-    }
-    /* berlayar mendekat ke sisi air dermaga */
-    28% {
-      transform: translate(-24.5vw, -3.6vw);
-      opacity: 1;
-    }
-    /* sandar — bongkar muat (bob jalan terus lewat .ship-img) */
-    54% {
-      transform: translate(-24.5vw, -3.6vw);
-      opacity: 1;
-    }
-    /* putar haluan */
-    56% {
-      transform: translate(-24.5vw, -3.6vw) scaleX(-1);
-      opacity: 1;
-    }
-    /* berlayar pergi */
-    93% {
-      transform: translate(0, 0) scaleX(-1);
-      opacity: 1;
-    }
-    97% {
-      transform: translate(1.5vw, 0.5vw) scaleX(-1);
-      opacity: 0;
-    }
-    100% {
-      transform: translate(1.5vw, 0.5vw) scaleX(-1);
-      opacity: 0;
-    }
   }
 
   /* ── Camar ──────────────────────────────────────────────────── */
@@ -702,5 +687,20 @@
   .slot.used {
     opacity: 0.25;
     filter: grayscale(1);
+  }
+
+  .edit-toggle {
+    position: absolute;
+    top: 8px;
+    right: 56px;
+    z-index: 60;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--busa);
+    background: rgba(8, 23, 41, 0.92);
+    border: 1px solid var(--garis-buih);
+    border-radius: var(--radius-s);
+    box-shadow: var(--shadow-panel);
   }
 </style>

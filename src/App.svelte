@@ -1,9 +1,18 @@
 <script lang="ts">
   import { game } from './lib/engine/store.svelte';
+  import { RELOAD_FLAG_KEY } from './lib/engine/editorStore.svelte';
   import Title from './lib/ui/Title.svelte';
   import CharacterSelect from './lib/ui/CharacterSelect.svelte';
   import GameScreen from './lib/ui/GameScreen.svelte';
   import OverScreen from './lib/ui/OverScreen.svelte';
+
+  // Setelah "🛠️ Edit Tata Letak" menyimpan & memuat ulang halaman (lihat
+  // editorStore.svelte.ts), lanjutkan langsung ke permainan yang tadi
+  // berjalan alih-alih kembali ke layar judul.
+  if (import.meta.env.DEV && sessionStorage.getItem(RELOAD_FLAG_KEY)) {
+    sessionStorage.removeItem(RELOAD_FLAG_KEY);
+    game.continueGame();
+  }
 
   // Pramuat gambar-gambar besar agar transisi layar mulus.
   const preload = [
