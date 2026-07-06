@@ -35,6 +35,11 @@
         <p class="eyebrow">Evaluasi akhir 30 hari · {character.name}</p>
         <div class="badge">{ending.icon}</div>
         <h1>{ending.title}</h1>
+        {#if game.freshUnlock}
+          <p class="fresh-unlock">
+            ★ Gelar baru untuk Galeri Akhir — {game.endingsUnlocked.length} dari {Object.keys(ENDINGS).length} terbuka
+          </p>
+        {/if}
         <p class="narration">{ending.narration}</p>
       {/if}
 
@@ -143,6 +148,19 @@
 
   .failed h1 {
     color: #ffb4a8;
+  }
+
+  .fresh-unlock {
+    display: inline-block;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--lampu-terang);
+    border: 1px solid color-mix(in srgb, var(--lampu) 55%, transparent);
+    background: rgba(245, 184, 65, 0.1);
+    padding: 5px 14px;
+    border-radius: 999px;
+    animation: pop-badge 0.6s 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
   }
 
   .gold h1 {

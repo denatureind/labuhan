@@ -15,8 +15,21 @@ import {
   dayDeltas,
 } from './core';
 import { sfx, startAmbient } from '../audio/sfx';
+import type { EndingDef } from '../types';
 
 const SAVE_KEY = 'pelabuhan-hijau-save-v1';
+/** Galeri Akhir: ending yang pernah diraih lintas permainan (tak ikut terhapus saat mulai baru). */
+const ENDINGS_KEY = 'pelabuhan-hijau-endings-v1';
+
+function loadUnlockedEndings(): EndingDef['id'][] {
+  try {
+    const raw = localStorage.getItem(ENDINGS_KEY);
+    const arr = raw ? (JSON.parse(raw) as EndingDef['id'][]) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
 
 export type Screen = 'title' | 'select' | 'game' | 'over';
 
@@ -41,6 +54,10 @@ class Game {
   /** Fasilitas yang panelnya sedang terbuka. */
   openFacility = $state<string | null>(null);
   hasSave = $state(false);
+  /** Galeri Akhir: id ending yang pernah diraih, lintas permainan. */
+  endingsUnlocked = $state<EndingDef['id'][]>(loadUnlockedEndings());
+  /** true bila ending pada layar akhir SAAT INI baru pertama kali diraih. */
+  freshUnlock = $state(false);
   #burstId = 0;
 
   constructor() {
@@ -172,6 +189,7 @@ class Game {
   private afterMutation(): void {
     if (!this.state) return;
     if (this.state.over) {
+      this.recordEnding();
       this.save();
       setTimeout(() => {
         this.screen = 'over';
@@ -181,6 +199,24 @@ class Game {
       return;
     }
     this.save();
+  }
+
+  /** Catat ending yang diraih ke Galeri Akhir (localStorage, lintas permainan). */
+  private recordEnding(): void {
+    const over = this.state?.over;
+    if (over?.kind !== 'ending') {
+      this.freshUnlock = false;
+      return;
+    }
+    this.freshUnlock = !this.endingsUnlocked.includes(over.endingId);
+    if (this.freshUnlock) {
+      this.endingsUnlocked = [...this.endingsUnlocked, over.endingId];
+      try {
+        localStorage.setItem(ENDINGS_KEY, JSON.stringify(this.endingsUnlocked));
+      } catch {
+        /* penyimpanan penuh/di-block — abaikan */
+      }
+    }
   }
 
   private save(): void {

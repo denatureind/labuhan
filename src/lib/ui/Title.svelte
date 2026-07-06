@@ -1,10 +1,13 @@
 <script lang="ts">
   import { game } from '../engine/store.svelte';
+  import { ENDINGS } from '../data/endings';
   import { sfx, isMuted, toggleMute } from '../audio/sfx';
   import HowToPlay from './HowToPlay.svelte';
 
   let muted = $state(isMuted());
   let showHow = $state(false);
+
+  const endingList = Object.values(ENDINGS);
 
   function onMute() {
     muted = toggleMute();
@@ -50,6 +53,18 @@
     <p class="hint rise" style="animation-delay: 0.85s">
       Jaga enam indikator tetap hidup — satu saja menyentuh titik kritis, pelabuhan ditutup.
     </p>
+
+    <div class="gallery rise" style="animation-delay: 1s" title="Lima gelar akhir menanti — mainkan gaya kepemimpinan berbeda untuk membuka semuanya.">
+      <span class="gallery-label">Galeri Akhir {game.endingsUnlocked.length}/{endingList.length}</span>
+      <div class="gallery-slots">
+        {#each endingList as e (e.id)}
+          {@const unlocked = game.endingsUnlocked.includes(e.id)}
+          <span class="slot" class:unlocked title={unlocked ? e.title : 'Belum terbuka'}>
+            {unlocked ? e.icon : '❔'}
+          </span>
+        {/each}
+      </div>
+    </div>
   </main>
 
   <button class="mute" onclick={onMute} aria-label={muted ? 'Nyalakan suara' : 'Matikan suara'}>
@@ -178,6 +193,43 @@
     font-size: 13px;
     color: var(--busa-redup);
     opacity: 0.85;
+  }
+
+  .gallery {
+    margin-top: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(8, 23, 41, 0.55);
+    border: 1px solid var(--garis-buih);
+    backdrop-filter: blur(6px);
+  }
+
+  .gallery-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--busa-redup);
+  }
+
+  .gallery-slots {
+    display: flex;
+    gap: 7px;
+  }
+
+  .gallery .slot {
+    font-size: 17px;
+    opacity: 0.35;
+    filter: grayscale(1);
+  }
+
+  .gallery .slot.unlocked {
+    opacity: 1;
+    filter: none;
+    text-shadow: 0 0 12px rgba(245, 184, 65, 0.45);
   }
 
   .mute {
