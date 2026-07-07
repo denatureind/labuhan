@@ -13,7 +13,7 @@ export const FACILITIES: FacilityDef[] = [
     icon: '⚓',
     tagline: 'Jantung bongkar-muat pelabuhan',
     sprite: `${IMG}/dermaga.png`,
-    pos: { x: 70.8, y: 42.4, w: 15 },
+    pos: { x: 71.3, y: 42.9, w: 16.5 },
     actions: [
       {
         id: 'bongkar-ekspres',
@@ -171,7 +171,7 @@ export const FACILITIES: FacilityDef[] = [
     icon: '🚤',
     tagline: 'Armada pengawas perairan',
     sprite: `${IMG}/kapal.png`,
-    pos: { x: 76, y: 79, w: 11 },
+    pos: { x: 68.8, y: 65.6, w: 8.5 },
     actions: [
       {
         id: 'patroli-laut',

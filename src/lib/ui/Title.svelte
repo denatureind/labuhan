@@ -23,8 +23,7 @@
   <main class="content">
     <p class="eyebrow rise" style="animation-delay: 0.15s">Simulasi Pelabuhan Nusantara</p>
     <h1 class="logo rise" style="animation-delay: 0.3s">
-      <span class="logo-top">Pelabuhan Hijau</span>
-      <span class="logo-main">Muara Harapan</span>
+      <img class="logo-img" src="./assets/images/logo.png" alt="Pelabuhan Hijau: Muara Harapan" />
     </h1>
     <p class="tagline rise" style="animation-delay: 0.5s">
       Bisnis menuntut. Laut berbisik. Rakyat berharap.
@@ -137,28 +136,14 @@
 
   .logo {
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     margin: 14px 0 18px;
-    text-shadow: 0 4px 30px rgba(2, 8, 20, 0.9);
+    filter: drop-shadow(0 4px 30px rgba(2, 8, 20, 0.9));
   }
 
-  .logo-top {
-    font-size: clamp(22px, 3.4vw, 34px);
-    font-weight: 600;
-    letter-spacing: 0.34em;
-    text-transform: uppercase;
-    color: var(--lampu-terang);
-    margin-left: 0.34em; /* imbangi letter-spacing agar tetap sumbu tengah */
-  }
-
-  .logo-main {
-    font-size: clamp(44px, 8vw, 84px);
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    background: linear-gradient(180deg, #ffffff, #b7d3f5);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .logo-img {
+    width: min(78vw, 320px);
+    height: auto;
   }
 
   .tagline {
