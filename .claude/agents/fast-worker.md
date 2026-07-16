@@ -1,4 +1,4 @@
-﻿---
+---
 name: fast-worker
 description: Use for mechanical tasks, boilerplate, tests, formatting, simple edits. Execute efficiently.
 model: sonnet
